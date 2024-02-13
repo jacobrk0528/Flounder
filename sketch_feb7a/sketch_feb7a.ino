@@ -6,6 +6,7 @@ int microphone = 8;
 int headState = 0;
 int tailState = 0;
 unsigned long startTime;
+unsigned long lastMicTime;
 bool running = false; 
 long randNum;
 
@@ -29,17 +30,23 @@ void setup() {
   digitalWrite(tail + 1, HIGH);
   digitalWrite(button, LOW);
 
+  running = false;
+
   delay(1000);
 }
 
 void loop() {
-  if (!(running || digitalRead(button))) {
+  if (!running && !digitalRead(button)) {
     startTime = millis();
+    lastMicTime = millis();
     running = true;
   }
 
-  if (millis() < startTime + 120000) {
-    if (digitalRead(microphone)) {
+  if ((millis() < startTime + 180000) && running) {
+    if (digitalRead(microphone) || (millis() < lastMicTime + 2000)) {
+      if (digitalRead(microphone)) {
+          lastMicTime = millis();
+      }
       randNum = random(1000);
       if (randNum < 500) {  // head
         if (headState) { // if head is up
@@ -58,7 +65,12 @@ void loop() {
           reverse(tail);
         }
       }
-      delay(random(300, 1000));
+      delay(random(400, 1000));
+    } else {
+      tailState = 0;
+      forward(tail);
+      headState = 0;
+      reverse(head);
     }
   } else {
     running = false;
